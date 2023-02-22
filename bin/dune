@@ -1,4 +1,4 @@
 (executable
  (public_name flow_field)
  (name main)
- (libraries flow_field))
+ (libraries camlimages camlimages.png))
