@@ -7,25 +7,64 @@ let build t =
       Png.save store [Images.Save_Quality 1] (Rgb24 t)
   with Failure m -> Format.printf "Error %s@." m
 
-(* type rgb = {
-  r: int;
-  g: int;
-  b: int;
-} *)
+let ver_strip t x len rgb =
+  let dim_x, dim_y = Images.size (Rgb24 t) in
+  if x > dim_x || x < 0 || x + len > dim_x then failwith "Out of image." else
+  for x = x to x + len - 1 do
+    for y = 0 to dim_y -1 do
+      Rgb24.set t x y rgb
+    done;
+  done
+
+let hor_strip t y len rgb =
+  let dim_x, dim_y = Images.size (Rgb24 t) in
+  if y > dim_y || y < 0 || y + len > dim_y then failwith "Out of image." else
+  for y = y to y + len - 1 do
+    for x = 0 to dim_x -1 do
+      Rgb24.set t x y rgb
+    done
+  done
+
+let _tarte_linzer t x len palette =
+(* ajouter le fait de decouper jusqu'en bas *)
+  let x = ref x in
+  let trou = !x in
+  let i_color = ref 0 in
+  while !x + len < 200 do
+    ver_strip t !x len palette.(!i_color);
+    (* hor_strip t !x len palette.(!i_color); *)
+    (* Format.printf "icolor = %d@." (!i_color+1); *)
+    hor_strip t !x len palette.(if !i_color + 1 < Array.length palette then !i_color + 1 else 0);
+    x := !x + trou + len;
+    i_color := (!i_color + 1) mod Array.length palette
+  done
+
+let rec build_palette arr r g b: Color.rgb array =
+  let open Random in
+  if Array.length arr = 4 then arr else
+  let red   = r + (let rand = 14 + (int 50) in if r + rand > 255 then 0 else rand) in
+  let green = g + (let rand = 14 + (int 50) in if g + rand > 255 then 0 else rand) in
+  let blue  = b + (let rand = 14 + (int 50) in if b + rand > 255 then 0 else rand) in
+  build_palette (Array.append arr [|{r; g; b}|]) red green blue
+
+let build_palette () =
+  let open Random in
+  build_palette [||] (int 256) (int 256) (int 256)
+
+let palette_preview t palette =
+  let _dim_x, dim_y = Images.size (Rgb24 t) in
+  let len = Array.length palette in
+  let strip_size = dim_y / len in
+  for i = 0 to len - 1 do
+    hor_strip t (i*strip_size) strip_size palette.(i)
+  done
+
 
 let () =
-  let palette : Color.rgb array =
-    (* from https://colorhunt.co/palette/7286d38ea7e9e5e0fffff2f2 *)
-    [|{r = 114; g = 134; b = 211};
-      {r = 142; g = 167; b = 233};
-      {r = 229; g = 224; b = 255};
-      {r = 255; g = 242; b = 242}|] in
-  let rgb24 = Rgb24.create 200 170 in
-   for x = 0 to 199 do
-    for y = 0 to 169 do
-      Rgb24.set rgb24 x y palette.(if (x*y) mod 2 = 0 then 0 else 1)
-    done;
-   done;
-  (* Rgb24.set_strip rgb24 0 9 (200*170) (Bytes.of_string "red"); *)
-  (* set_strip t x_start y_start len bytes *)
-  build rgb24
+  Random.self_init ();
+  let rgb24 = Rgb24.create 200 200 in
+  try
+    (* tarte_linzer rgb24 17 6 (build_palette ()); *)
+    palette_preview rgb24 (build_palette ());
+    build rgb24
+  with Failure e -> Format.printf "ERROR: %s@." e
