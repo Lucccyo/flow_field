@@ -25,8 +25,7 @@ let hor_strip t y len rgb =
     done
   done
 
-let tarte_linzer t x len palette =
-(* ajouter le fait de decouper jusqu'en bas *)
+let _tarte_linzer t x len palette =
   let x = ref x in
   let trou = !x in
   let i_color = ref 0 in
@@ -40,31 +39,34 @@ let tarte_linzer t x len palette =
   with Failure _ -> ()
 
 let rec build_palette size arr r g b: Color.rgb array =
+  let ofs = 50 / size in
   let open Random in
   if Array.length arr = size then arr else
-  let red   = r + (let rand = 14 + (int 50) in if r + rand > 255 then 0 else rand) in
-  let green = g + (let rand = 14 + (int 50) in if g + rand > 255 then 0 else rand) in
-  let blue  = b + (let rand = 14 + (int 50) in if b + rand > 255 then 0 else rand) in
+  let red   = r + (let rand = ofs + (int 50) in if r + rand > 255 then 0 else rand) in
+  let green = g + (let rand = ofs + (int 50) in if g + rand > 255 then 0 else rand) in
+  let blue  = b + (let rand = ofs + (int 50) in if b + rand > 255 then 0 else rand) in
   build_palette size (Array.append arr [|{r; g; b}|]) red green blue
 
 let build_palette size =
   let open Random in
-  build_palette size [||] (int 256) (int 256) (int 256)
+  build_palette size [||] (int 150) (int 150) (int 150)
 
-let _palette_preview t palette =
+let palette_preview t palette =
   let _dim_x, dim_y = Images.size (Rgb24 t) in
   let len = Array.length palette in
   let strip_size = dim_y / len in
+  let res = dim_y mod len in
   for i = 0 to len - 1 do
     hor_strip t (i*strip_size) strip_size palette.(i)
-  done
+  done;
+  hor_strip t (strip_size * len) res palette.(len-1)
 
 
 let () =
   Random.self_init ();
   let rgb24 = Rgb24.create 200 200 in
   try
-    tarte_linzer rgb24 8 5 (build_palette 7);
-    (* palette_preview rgb24 (build_palette 7); *)
+    (* tarte_linzer rgb24 8 5 (build_palette 7); *)
+    palette_preview rgb24 (build_palette 7);
     build rgb24
   with Failure e -> Format.printf "ERROR: %s@." e
