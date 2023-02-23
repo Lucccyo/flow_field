@@ -9,5 +9,6 @@ let build t =
 
 let () =
   let rgb24 = Rgb24.create 200 170 in
-  Rgb24.set rgb24 0 0 {r = 255; g = 0; b = 0};
+  Rgb24.set_strip rgb24 0 9 (200*170) (Bytes.of_string "miaou");
+  (* set_strip t x_start y_start len bytes *)
   build rgb24
