@@ -99,7 +99,6 @@ let bresenham t x0 y0 x1 y1 color =
     Rgba32.set t !x !y color;
   done
 
-
 let () =
   Random.self_init ();
   let rgba32 = Rgba32.create 100 100 in
@@ -108,7 +107,7 @@ let () =
     (* alpha 0 -> 255 *)
     (* Rgba32.set rgba32 3 3 red; *)
     (* ver_strip rgba32 1 1 red; *)
-    bresenham rgba32 4 5 7 9 red;
+    bresenham rgba32 4 4 7 7 red;
     (* hor_strip rgba32 8 7 3 red;
     ver_strip rgba32 8 7 3 red; *)
     (* Rgba32.set rgba32 15 15 red; *)
