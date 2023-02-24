@@ -49,7 +49,8 @@ let rec build_palette size arr r g b: Color.rgb array =
 
 let build_palette size =
   let open Random in
-  build_palette size [||] (int 150) (int 150) (int 150)
+  let ofs = 100 / size in
+  build_palette size [||] (int ofs) (int ofs) (int ofs)
 
 let palette_preview t palette =
   let _dim_x, dim_y = Images.size (Rgb24 t) in
@@ -67,6 +68,6 @@ let () =
   let rgb24 = Rgb24.create 200 200 in
   try
     (* tarte_linzer rgb24 8 5 (build_palette 7); *)
-    palette_preview rgb24 (build_palette 7);
+    palette_preview rgb24 (build_palette 6);
     build rgb24
   with Failure e -> Format.printf "ERROR: %s@." e
