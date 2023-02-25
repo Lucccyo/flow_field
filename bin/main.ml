@@ -72,46 +72,50 @@ let _draw_line t xs ys xe ye =
     Rgba32.set t x ideal_y red
   done
 
-(* let line2 t x0 y0 x1 y1 color =
-  let a = y1 - y0 in
-  let b = x0 - x1 in
-  let c = (x1 * y0) - (x0 * y1) in
-  let rec fill x y =
-    if y = y1 then ()
-    else begin
-      let rec search_next_node next_x = if a*next_x + b*(y+1) + c = 0 then next_x else search_next_node (next_x+1) in
-      Format.printf "(%d;%d)@." x y;
-      let next_x = search_next_node (x+1) in
-      hor_strip t x y (next_x - x) color;
-      fill (x + next_x) (y+1) end in
-  fill x0 y0 *)
+let bresenham t x0 y0 x1 y1 color =
+  let dx = float_of_int (Int.abs(x1 - x0)) in
+  let dy = float_of_int (Int.abs(y1 - y0)) in
+  let sr = if dx > dy then dx else dy in
+  let lr = if dx > dy then dy else dx in
+  let err = ref (sr /. 2.) in
+  let curr_lr = ref (if dx > dy then y0 else x0) in
+  for curr_sr = (if dx > dy then x0 else y0) to (if dx > dy then x1 else y1) do
+    err := !err -. lr;
+    if !err < 0. then (curr_lr := !curr_lr + 1; err := !err +. sr);
+    if dx > dy
+      then Rgba32.set t curr_sr !curr_lr color
+  else Rgba32.set t !curr_lr curr_sr color
+done
+
+let bresenham_n t x0 y0 x1 y1 color =
+  let dx = float_of_int (Int.abs(x1 - x0)) in
+  let dy = float_of_int (Int.abs(y1 - y0)) in
+  let sr = if dx > dy then dx else dy in
+  let lr = if dx > dy then dy else dx in
+  let err = ref (sr /. 2.) in
+  let curr_lr = ref (if dx > dy then y0 else x0) in
+  for curr_sr = (if dx > dy then x0 else y0) downto (if dx > dy then x1 else y1) do
+    err := !err -. lr;
+    if !err < 0. then (curr_lr := !curr_lr + 1; err := !err +. sr);
+    if dx > dy
+      then Rgba32.set t curr_sr !curr_lr color
+      else Rgba32.set t !curr_lr curr_sr color
+  done
 
 let bresenham t x0 y0 x1 y1 color =
-  let dx = x1 - x0 in
-  let dy = y1 - y0 in
-  let err = ref (2*dy - dx) in
-  let x = ref x0 in
-  let y = ref y0 in
-  Rgba32.set t !x !y color;
-  while !x < x1 do
-    x := !x + 1;
-    if !err < 0 then err := !err + 2*dy else (y := !y + 1; err := !err + 2*(dy - dx));
-    Rgba32.set t !x !y color;
-  done
+  if x0 < x1 && y0 < y1 then bresenham t x0 y0 x1 y1 color else
+  if x0 < x1 && y0 > y1 then bresenham_n t x1 y1 x0 y0 color else
+  if x0 > x1 && y0 < y1 then bresenham_n t x0 y0 x1 y1 color else
+  if x0 > x1 && y0 > y1 then bresenham t x1 y1 x0 y0 color
 
 let () =
   Random.self_init ();
   let rgba32 = Rgba32.create 100 100 in
   try
     let red : Color.rgba = {color = {r = 255; g = 0; b = 0}; alpha = 255} in
-    (* alpha 0 -> 255 *)
-    (* Rgba32.set rgba32 3 3 red; *)
-    (* ver_strip rgba32 1 1 red; *)
-    bresenham rgba32 4 4 7 7 red;
-    (* hor_strip rgba32 8 7 3 red;
-    ver_strip rgba32 8 7 3 red; *)
-    (* Rgba32.set rgba32 15 15 red; *)
-    (* tarte_linzer rgba32 8 5 (build_palette 7); *)
-    (* palette_preview Rgba32 (build_palette 6); *)
+    bresenham rgba32 1 2 6 1 red;
+    bresenham rgba32 6 3 1 4 red;
+    bresenham rgba32 3 5 8 7 red;
+    bresenham rgba32 8 9 4 7 red;
     build rgba32
   with Failure e -> Format.printf "ERROR: %s@." e
