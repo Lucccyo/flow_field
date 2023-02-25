@@ -40,7 +40,7 @@ let hor_strip t y len rgb =
     done
   done
 
-let tarte_linzer t ofs bs palette =
+let _tarte_linzer t ofs bs palette =
   let c = ref ofs in
   let i_color = ref 0 in
   try
@@ -61,12 +61,12 @@ let rec build_palette size arr r g b: Color.rgba array =
   let blue  = b + (let rand = ofs + (int 50) in if b + rand > 255 then 0 else rand) in
   build_palette size (Array.append arr [|{color = {r; g; b}; alpha = 255}|]) red green blue
 
-let build_palette size =
+let _build_palette size =
   let open Random in
   let ofs = 100 / size in
   build_palette size [||] (int ofs) (int ofs) (int ofs)
 
-let palette_preview t palette =
+let _palette_preview t palette =
   let _dim_x, dim_y = Images.size (Rgba32 t) in
   let len = Array.length palette in
   let strip_size = dim_y / len in
@@ -84,6 +84,21 @@ let _draw_line t xs ys xe ye =
     let ideal_y = ((ye - ys)/(xe - xs)) * (x - xs) + ys in
     Rgba32.set t x ideal_y red
   done
+let single_aliased_pixel t x y color =
+  (* cache cache d'erreur *)
+  let _lowpacity      : Color.rgba = {color with alpha = 1/15} in
+  let lowpacity      : Color.rgba = {color with alpha = color.alpha /10} in
+  let middle_opacity : Color.rgba = {color with alpha = color.alpha /4} in
+  let top_opacity : Color.rgba = color in
+  Rgba32.set t (x - 1) (y - 1) lowpacity;
+  Rgba32.set t x (y - 1) middle_opacity;
+  Rgba32.set t (x + 1) (y - 1) lowpacity;
+  Rgba32.set t (x - 1) y middle_opacity;
+  Rgba32.set t x y top_opacity;
+  Rgba32.set t (x + 1) y middle_opacity;
+  Rgba32.set t (x - 1) (y + 1) lowpacity;
+  Rgba32.set t x (y + 1) middle_opacity;
+  Rgba32.set t (x + 1) (y + 1) lowpacity
 
 let bresenham t x0 y0 x1 y1 color =
   let dx = float_of_int (Int.abs(x1 - x0)) in
@@ -96,9 +111,10 @@ let bresenham t x0 y0 x1 y1 color =
     err := !err -. lr;
     if !err < 0. then (curr_lr := !curr_lr + 1; err := !err +. sr);
     if dx > dy
-      then Rgba32.set t curr_sr !curr_lr color
-  else Rgba32.set t !curr_lr curr_sr color
+      then single_aliased_pixel t curr_sr !curr_lr color
+      else single_aliased_pixel t !curr_lr curr_sr color
 done
+
 
 let bresenham_n t x0 y0 x1 y1 color =
   let dx = float_of_int (Int.abs(x1 - x0)) in
@@ -111,26 +127,35 @@ let bresenham_n t x0 y0 x1 y1 color =
     err := !err -. lr;
     if !err < 0. then (curr_lr := !curr_lr + 1; err := !err +. sr);
     if dx > dy
-      then Rgba32.set t curr_sr !curr_lr color
-      else Rgba32.set t !curr_lr curr_sr color
+      then single_aliased_pixel t curr_sr !curr_lr color
+      else single_aliased_pixel t !curr_lr curr_sr color
   done
 
-let _bresenham t x0 y0 x1 y1 color =
+let bresenham t x0 y0 x1 y1 color =
   if x0 < x1 && y0 < y1 then bresenham t x0 y0 x1 y1 color else
   if x0 < x1 && y0 > y1 then bresenham_n t x1 y1 x0 y0 color else
   if x0 > x1 && y0 < y1 then bresenham_n t x0 y0 x1 y1 color else
   if x0 > x1 && y0 > y1 then bresenham t x1 y1 x0 y0 color
 
+
+
 let () =
   Random.self_init ();
   let rgba32 = Rgba32.create 100 100 in
   try
-    palette_preview rgba32 (build_palette 5);
-    tarte_linzer rgba32 7 16 (build_palette 4);
-    (* let red : Color.rgba = {color = {r = 255; g = 0; b = 0}; alpha = 255} in *)
-    (* bresenham rgba32 1 2 6 1 red;
-    bresenham rgba32 6 3 1 4 red;
-    bresenham rgba32 3 5 8 7 red;
-    bresenham rgba32 8 9 4 7 red; *)
+    let red : Color.rgba = {color = {r = 255; g = 0; b = 0}; alpha = 255} in
+    single_aliased_pixel rgba32 1 9 red;
+    bresenham rgba32 1 1 8 11 red;
+    (* single_aliased_pixel rgba32 1 0 red;
+    single_aliased_pixel rgba32 1 0 red; *)
+    (* palette_preview rgba32 (build_palette 5);
+    tarte_linzer rgba32 7 16 (build_palette 4); *)
+    (* bresenham rgba32 6 3 1 4 red; *)
+    (* bresenham rgba32 3 5 8 7 red; *)
+    (* bresenham rgba32 8 9 4 7 red; *)
     build rgba32
   with Failure e -> Format.printf "ERROR: %s@." e
+
+
+
+(* ajouter les effets de bord sur bresenham *)
