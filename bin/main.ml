@@ -139,6 +139,27 @@ let bresenham t x0 y0 x1 y1 color =
 done
 
 
+(* let bresenham_ne t x0 y0 x1 y1 color =
+  let dx = float_of_int (Int.abs(x1 - x0)) in
+  let dy = float_of_int (Int.abs(y1 - y0)) in
+  let sr = if dx > dy then dx else dy in
+  let lr = if dx > dy then dy else dx in
+  let err = ref (sr /. 2.) in
+  let curr_lr = ref (if dx > dy then y0 else x0) in
+  Format.printf "sr = %s@." (if dx > dy then "dx" else "dy");
+  if dx > dy
+    then begin
+      for curr_sr = x0 to x1 do
+      err := !err -. lr;
+      if !err < 0. then (curr_lr := !curr_lr + 1; err := !err +. sr);
+      if dx > dy
+        then single_aliased_pixel t curr_sr !curr_lr color
+        else single_aliased_pixel t !curr_lr curr_sr color
+    end;
+    else begin
+
+  done *)
+
 let bresenham_n t x0 y0 x1 y1 color =
   let dx = float_of_int (Int.abs(x1 - x0)) in
   let dy = float_of_int (Int.abs(y1 - y0)) in
@@ -146,17 +167,28 @@ let bresenham_n t x0 y0 x1 y1 color =
   let lr = if dx > dy then dy else dx in
   let err = ref (sr /. 2.) in
   let curr_lr = ref (if dx > dy then y0 else x0) in
-  for curr_sr = (if dx > dy then x0 else y0) downto (if dx > dy then x1 else y1) do
-    err := !err -. lr;
-    if !err < 0. then (curr_lr := !curr_lr + 1; err := !err +. sr);
-    if dx > dy
-      then single_aliased_pixel t curr_sr !curr_lr color
-      else single_aliased_pixel t !curr_lr curr_sr color
-  done
+  Format.printf "sr = %s@." (if dx > dy then "dx" else "dy");
+  if dx > dy then
+    for curr_sr = x0 to x1 do
+      err := !err -. lr;
+      if !err < 0. then (curr_lr := !curr_lr - 1; err := !err +. sr);
+      if dx > dy
+        then single_aliased_pixel t curr_sr !curr_lr color
+        else single_aliased_pixel t !curr_lr curr_sr color
+    done
+  else
+    for curr_sr = y0 downto y1 do
+      err := !err -. lr;
+      if !err < 0. then (curr_lr := !curr_lr + 1; err := !err +. sr);
+      if dx > dy
+        then single_aliased_pixel t curr_sr !curr_lr color
+        else single_aliased_pixel t !curr_lr curr_sr color
+    done
 
-let _bresenham t x0 y0 x1 y1 color =
+
+let bresenham t x0 y0 x1 y1 color =
   if x0 <= x1 && y0 <= y1 then bresenham   t x0 y0 x1 y1 color else
-  if x0 <= x1 && y0 >  y1 then bresenham_n t x0 y0 x1 y1 color else
+  if x0 <= x1 && y0 >  y1 then bresenham_n t x0 y0 x1 y1 color else (* <- *)
   if x0 >  x1 && y0 <= y1 then bresenham_n t x1 y1 x0 y0 color else
   if x0 >  x1 && y0 >  y1 then bresenham   t x1 y1 x0 y0 color
 
@@ -198,8 +230,9 @@ let bezier t x_list y_list color =
     if ti > 1.01 then () else
     let x = int_of_float ( bezier n 0 ti fx_list ) in
     let y = int_of_float ( bezier n 0 ti fy_list ) in
-    bresenham t ox oy x y color;
-    iter (ti +. 0.05) x y in
+    Format.printf "(%d;%d) ---> (%d;%d)@." ox oy x y;
+    if Rgba32.get t x y <> color then bresenham t ox oy x y color;
+    iter (ti +. 0.0001) x y in
   iter 0. (List.hd x_list) (List.hd y_list)
 
 
@@ -212,21 +245,26 @@ let () =
     let blue : Color.rgba = {color = {r = 0; g = 0; b = 255}; alpha = 255} in
     let white : Color.rgba = {color = {r = 255; g = 255; b = 255}; alpha = 255} in
     hor_strip rgba32 0 300 white;
-    bezier rgba32 [20; 70; 100; 120; 200; 120] [120; 20; 100; 30; 70; 100] red;
+    (* bezier rgba32 [20; 70; 100; 120; 200; 120] [120; 20; 100; 30; 70; 100] red;
     Rgba32.set rgba32 20  120 green;
     Rgba32.set rgba32 70  20  green;
     Rgba32.set rgba32 100 100 green;
     Rgba32.set rgba32 120 30  green;
     Rgba32.set rgba32 200 70  green;
-    Rgba32.set rgba32 120 100 green;
+    Rgba32.set rgba32 120 100 green; *)
+
 
     bezier rgba32 [70; 200; 20; 150] [250; 150; 150; 250] red;
     Rgba32.set rgba32 70  250 blue;
-    Rgba32.set rgba32 200 150 blue;
+    Rgba32.set rgba32 200 150 green;
     Rgba32.set rgba32 20  150 blue;
     Rgba32.set rgba32 150 250 blue;
 
-    bezier rgba32 [1] [1] red;
+    (* bresenham_n rgba32 70 250 87 235 red;
+    bresenham rgba32 87 235 100 223 green;
+    bresenham rgba32 100 223 109 211 blue; *)
+    (* Rgba32.set rgba32 87 235 green;
+    Rgba32.set rgba32 100 223 green; *)
     build rgba32
 
 
