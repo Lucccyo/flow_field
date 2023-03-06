@@ -145,7 +145,6 @@ let bresenham_n t x0 y0 x1 y1 color =
   let lr = if dx > dy then dy else dx in
   let err = ref (sr /. 2.) in
   let curr_lr = ref (if dx > dy then y0 else x0) in
-  Format.printf "sr = %s@." (if dx > dy then "dx" else "dy");
   if dx > dy then
     for curr_sr = x0 to x1 do
       err := !err -. lr;
@@ -194,7 +193,6 @@ let bezier t x_list y_list color =
     if ti > 1.01 then () else
     let x = int_of_float ( bezier n 0 ti fx_list ) in
     let y = int_of_float ( bezier n 0 ti fy_list ) in
-    Format.printf "(%d;%d) ---> (%d;%d)@." ox oy x y;
     if Rgba32.get t x y <> color then bresenham t ox oy x y color;
     iter (ti +. 0.0001) x y in
   iter 0. (List.hd x_list) (List.hd y_list)
