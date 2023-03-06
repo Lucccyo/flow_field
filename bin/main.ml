@@ -174,7 +174,7 @@ let rec bezier n i t p_list =
     bezier n (i + 1) t tl
     +. ((fbin_coeff) *. ((1. -. t)**(fn -. fi)) *. (t**fi) *. pi)
 
-let bezier t x_list y_list color =
+(* let bezier t x_list y_list color =
   let o = List.length x_list in
   if o <> List.length y_list then failwith "missing corresponding coordonate";
   let fx_list = List.map (fun x -> float_of_int x) x_list in
@@ -184,10 +184,23 @@ let bezier t x_list y_list color =
   while !ti <= 1.01 do   (* hummm *)
     let x = int_of_float ( bezier n 0 !ti fx_list ) in
     let y = int_of_float ( bezier n 0 !ti fy_list ) in
-    single_aliased_pixel t x y color;
-    ti := !ti +. 0.05;
-    (* n := !n - 1; *)
-  done
+    if Rgba32.get t x y <> color then single_aliased_pixel t x y color;
+    ti := !ti +. 0.005;
+  done *)
+
+let bezier t x_list y_list color =
+  let o = List.length x_list in
+  if o <> List.length y_list then failwith "missing corresponding coordonate";
+  let fx_list = List.map (fun x -> float_of_int x) x_list in
+  let fy_list = List.map (fun y -> float_of_int y) y_list in
+  let n = o - 1 in
+  let rec iter ti ox oy=
+    if ti > 1.01 then () else
+    let x = int_of_float ( bezier n 0 ti fx_list ) in
+    let y = int_of_float ( bezier n 0 ti fy_list ) in
+    bresenham t ox oy x y color;
+    iter (ti +. 0.05) x y in
+  iter 0. (List.hd x_list) (List.hd y_list)
 
 
 let () =
@@ -212,7 +225,11 @@ let () =
     Rgba32.set rgba32 200 150 blue;
     Rgba32.set rgba32 20  150 blue;
     Rgba32.set rgba32 150 250 blue;
+
+    bezier rgba32 [1] [1] red;
     build rgba32
+
+
   with Failure e -> Format.printf "ERROR: %s@." e
 
 (* bezier : - regarder si on a pas déjà dessiné tel pixel *)
