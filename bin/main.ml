@@ -209,43 +209,19 @@ let rand_lst size shift max =
 
 let () =
   Random.self_init ();
-  let rgba32 = Rgba32.create 300 300 in
+  let image_size = 1000 in
+  let rgba32 = Rgba32.create image_size image_size in
   try
     let open Color in
-    let palette = [|{color = {r = 255; g = 0; b = 0}; alpha = 255} ;
-                    {color = {r = 0;   g = 255; b = 0}; alpha = 255};
-                    {color = {r = 0;   g = 0; b = 255}; alpha = 255};
-                    {color = {r = 255;   g = 0; b = 255}; alpha = 255};
-                    {color = {r = 0;   g = 0; b = 0}; alpha = 255}|] in
     let white : Color.rgba = {color = {r = 255; g = 255; b = 255}; alpha = 255} in
-    hor_strip rgba32 0 300 white;
-    (* bezier rgba32 [20; 70; 100; 120; 200; 120] [120; 20; 100; 30; 70; 100] red;
-    Rgba32.set rgba32 20  120 green;
-    Rgba32.set rgba32 70  20  green;
-    Rgba32.set rgba32 100 100 green;
-    Rgba32.set rgba32 120 30  green;
-    Rgba32.set rgba32 200 70  green;
-    Rgba32.set rgba32 120 100 green;
-
-
-    bezier rgba32 [70; 200; 20; 150] [250; 150; 150; 250] red;
-    Rgba32.set rgba32 70  250 blue;
-    Rgba32.set rgba32 200 150 green;
-    Rgba32.set rgba32 20  150 blue;
-    Rgba32.set rgba32 150 250 blue; *)
-
-    (* let palette = build_palette 5 in *)
-    let r  = 42 in
+    hor_strip rgba32 0 image_size white;
+    let r  = 20 in
     for _ = 0 to r do
-      (* let rp = Random.int (Array.length palette) in *)
       let rp = {color = {r = Random.int 255; g = Random.int 255; b = Random.int 255}; alpha = 255} in
-      let size = 5 in
-      let xl = (rand_lst size 4 290) in
-      let yl = (rand_lst size 4 290) in
+      let size = Random.int 10 + 3 in
+      let xl = (rand_lst size 4 (image_size - 10)) in
+      let yl = (rand_lst size 4 (image_size - 10)) in
       bezier rgba32 xl yl rp;
-      (*for i = 0 to size - 1 do
-        Rgba32.set rgba32 (List.nth xl i) (List.nth yl i) palette.(i)
-      done;*)
       ()
     done;
 
