@@ -2,3 +2,6 @@
  (public_name flow_field)
  (name main)
  (libraries camlimages camlimages.png))
+(env
+  (dev
+    (flags (:standard -w -32-26))))
