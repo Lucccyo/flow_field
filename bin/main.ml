@@ -183,7 +183,7 @@ let rec bezier n i t p_list =
     bezier n (i + 1) t tl
     +. ((fbin_coeff) *. ((1. -. t)**(fn -. fi)) *. (t**fi) *. pi)
 
-let bezier t x_list y_list color =
+let curve_bezier t x_list y_list color =
   let o = List.length x_list in
   if o <> List.length y_list then failwith "missing corresponding coordonate";
   let fx_list = List.map (fun x -> float_of_int x) x_list in
@@ -201,7 +201,26 @@ let bezier t x_list y_list color =
     (*if Rgba32.get t x y <> color then*)
     bresenham t ox oy x y color;
     if ti < 1.0 then iter (ti +. step) x y in
-  iter step (List.hd x_list) (List.hd y_list)
+    iter step (List.hd x_list) (List.hd y_list)
+
+
+let curve_points t x_list y_list =
+  let o = List.length x_list in
+  if o <> List.length y_list then failwith "missing corresponding coordonate";
+  let fx_list = List.map (fun x -> float_of_int x) x_list in
+  let fy_list = List.map (fun y -> float_of_int y) y_list in
+  let n = o - 1 in
+  let step = 0.01 in
+  let rec iter ti ox oy res =
+    let x,y = if ti >= 1.0 then
+      List.hd (List.rev x_list),
+      List.hd (List.rev y_list)
+    else
+      int_of_float ( bezier n 0 ti fx_list ),
+      int_of_float ( bezier n 0 ti fy_list ) in
+      Rgba32.set t x y {color = {r = 0; g = 0; b = 0}; alpha = 255};
+    if ti < 1.0 then iter (ti +. step) x y (List.append res [(x, y)]) else res in
+  iter step (List.hd x_list) (List.hd y_list) []
 
 let rand_lst size shift max =
   let open Random in
@@ -214,16 +233,25 @@ let () =
   try
     let open Color in
     let white : Color.rgba = {color = {r = 255; g = 255; b = 255}; alpha = 255} in
+    let black : Color.rgba = {color = {r = 0; g = 0; b = 0}; alpha = 255} in
+    let blue  : Color.rgba = {color = {r = 0; g = 0; b = 255}; alpha = 255} in
+    let red   : Color.rgba = {color = {r = 255; g = 0; b = 0}; alpha = 50} in
+    let green : Color.rgba = {color = {r = 0; g = 255; b = 0}; alpha = 0} in
     hor_strip rgba32 0 image_size white;
-    let r  = 20 in
-    for _ = 0 to r do
-      let rp = {color = {r = Random.int 255; g = Random.int 255; b = Random.int 255}; alpha = 255} in
-      let size = Random.int 10 + 3 in
-      let xl = (rand_lst size 4 (image_size - 10)) in
-      let yl = (rand_lst size 4 (image_size - 10)) in
-      bezier rgba32 xl yl rp;
-      ()
-    done;
+    let start_points     = curve_points rgba32 (rand_lst 5 20 950) (rand_lst 5 20 950) in
+    let end_points       = curve_points rgba32 (rand_lst 5 20 950) (rand_lst 5 20 950) in
+    let control_points   = curve_points rgba32 (rand_lst 5 20 950) (rand_lst 5 20 950) in
 
+    Format.printf "%d %d %d@." (List.length start_points) (List.length control_points) (List.length end_points);
+
+    for i = 0 to List.length start_points - 1 do
+      curve_bezier rgba32
+        [fst (List.nth start_points i);
+         fst (List.nth control_points i);
+         fst (List.nth end_points i)]
+        [snd (List.nth start_points i);
+         snd (List.nth control_points i);
+         snd (List.nth end_points i)] red;
+    done;
     build rgba32
   with Failure e -> Format.printf "ERROR: %s@." e

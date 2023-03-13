@@ -4,4 +4,4 @@
  (libraries camlimages camlimages.png))
 (env
   (dev
-    (flags (:standard -w -32-26))))
+    (flags (:standard -w -32-26-27))))
