@@ -230,11 +230,11 @@ let rec ribbon t starts controls ends color =
   if starts = [] then () else begin
   curve_bezier t
     [fst (List.hd starts);
-      fst (List.hd controls);
-      fst (List.hd ends)]
+     fst (List.hd controls);
+     fst (List.hd ends)]
     [snd (List.hd starts);
-      snd (List.hd controls);
-      snd (List.hd ends)] color;
+     snd (List.hd controls);
+     snd (List.hd ends)] color;
   ribbon t (List.tl starts) (List.tl controls) (List.tl ends) color end
 
 let () =
