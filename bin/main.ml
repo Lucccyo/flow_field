@@ -218,13 +218,24 @@ let curve_points t x_list y_list =
     else
       int_of_float ( bezier n 0 ti fx_list ),
       int_of_float ( bezier n 0 ti fy_list ) in
-      Rgba32.set t x y {color = {r = 0; g = 0; b = 0}; alpha = 255};
+      (* Rgba32.set t x y {color = {r = 0; g = 0; b = 0}; alpha = 255}; *)
     if ti < 1.0 then iter (ti +. step) x y (List.append res [(x, y)]) else res in
   iter step (List.hd x_list) (List.hd y_list) []
 
 let rand_lst size shift max =
   let open Random in
   List.init size (fun _ -> shift + int max)
+
+let rec ribbon t starts controls ends color =
+  if starts = [] then () else begin
+  curve_bezier t
+    [fst (List.hd starts);
+      fst (List.hd controls);
+      fst (List.hd ends)]
+    [snd (List.hd starts);
+      snd (List.hd controls);
+      snd (List.hd ends)] color;
+  ribbon t (List.tl starts) (List.tl controls) (List.tl ends) color end
 
 let () =
   Random.self_init ();
@@ -238,20 +249,9 @@ let () =
     let red   : Color.rgba = {color = {r = 255; g = 0; b = 0}; alpha = 50} in
     let green : Color.rgba = {color = {r = 0; g = 255; b = 0}; alpha = 0} in
     hor_strip rgba32 0 image_size white;
-    let start_points     = curve_points rgba32 (rand_lst 5 20 950) (rand_lst 5 20 950) in
-    let end_points       = curve_points rgba32 (rand_lst 5 20 950) (rand_lst 5 20 950) in
-    let control_points   = curve_points rgba32 (rand_lst 5 20 950) (rand_lst 5 20 950) in
-
-    Format.printf "%d %d %d@." (List.length start_points) (List.length control_points) (List.length end_points);
-
-    for i = 0 to List.length start_points - 1 do
-      curve_bezier rgba32
-        [fst (List.nth start_points i);
-         fst (List.nth control_points i);
-         fst (List.nth end_points i)]
-        [snd (List.nth start_points i);
-         snd (List.nth control_points i);
-         snd (List.nth end_points i)] red;
-    done;
+    ribbon rgba32
+      (curve_points rgba32 (rand_lst 5 20 950) (rand_lst 5 20 950))
+      (curve_points rgba32 (rand_lst 5 20 950) (rand_lst 5 20 950))
+      (curve_points rgba32 (rand_lst 5 20 950) (rand_lst 5 20 950)) red;
     build rgba32
   with Failure e -> Format.printf "ERROR: %s@." e
