@@ -52,19 +52,19 @@ let _tarte_linzer t ofs bs palette =
     done
   with Failure _ -> ()
 
-let rec build_palette size arr r g b: Color.rgba array =
+let rec build_palette size arr r g b a: Color.rgba array =
   let ofs = 50 / size in
   let open Random in
   if Array.length arr = size then arr else
   let red   = r + (let rand = ofs + (int 50) in if r + rand > 255 then 0 else rand) in
   let green = g + (let rand = ofs + (int 50) in if g + rand > 255 then 0 else rand) in
   let blue  = b + (let rand = ofs + (int 50) in if b + rand > 255 then 0 else rand) in
-  build_palette size (Array.append arr [|{color = {r; g; b}; alpha = 255}|]) red green blue
+  build_palette size (Array.append arr [|{color = {r; g; b}; alpha = a}|]) red green blue a
 
-let _build_palette size =
+let build_palette size a=
   let open Random in
   let ofs = 100 / size in
-  build_palette size [||] (int ofs) (int ofs) (int ofs)
+  build_palette size [||] (int ofs) (int ofs) (int ofs) a
 
 let _palette_preview t palette =
   let _dim_x, dim_y = Images.size (Rgba32 t) in
@@ -247,11 +247,15 @@ let () =
     let black : Color.rgba = {color = {r = 0; g = 0; b = 0}; alpha = 255} in
     let blue  : Color.rgba = {color = {r = 0; g = 0; b = 255}; alpha = 255} in
     let red   : Color.rgba = {color = {r = 255; g = 0; b = 0}; alpha = 50} in
-    let green : Color.rgba = {color = {r = 0; g = 255; b = 0}; alpha = 0} in
+    let green : Color.rgba = {color = {r = 0; g = 255; b = 0}; alpha = 50} in
     hor_strip rgba32 0 image_size white;
-    ribbon rgba32
+
+    let palette = build_palette 4 50 in
+    for i = 0 to 3 do
+      ribbon rgba32
       (curve_points rgba32 (rand_lst 5 20 950) (rand_lst 5 20 950))
       (curve_points rgba32 (rand_lst 5 20 950) (rand_lst 5 20 950))
-      (curve_points rgba32 (rand_lst 5 20 950) (rand_lst 5 20 950)) red;
+      (curve_points rgba32 (rand_lst 5 20 950) (rand_lst 5 20 950)) palette.(i);
+    done;
     build rgba32
   with Failure e -> Format.printf "ERROR: %s@." e
