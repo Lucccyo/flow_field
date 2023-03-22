@@ -1,7 +1,7 @@
 (executable
  (public_name flow_field)
  (name main)
- (libraries camlimages camlimages.png))
+ (libraries camlimages camlimages.png data))
 (env
   (dev
     (flags (:standard -w -32-26-27))))
