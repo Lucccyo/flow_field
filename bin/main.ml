@@ -1,7 +1,5 @@
 open Data.Bezier
 
-(* type angle = { mutable angle : float; } *)
-
 let build t =
   let filename = "img.png" in
   try
@@ -15,27 +13,25 @@ let rand_lst size shift max =
   let open Random in
   List.init size (fun _ -> shift + int max)
 
-let def_angle = Float.pi *. 0.25
-
-let rand_angle = Float.pi *. (Random.float 45.)
-
-let vector_field dim_x dim_y space shift = Array.init ((dim_y / space) - (shift * 2)) (fun _ -> Array.init ((dim_x / space) - (shift * 2)) (fun _ -> def_angle))
+let vector_field dim_x dim_y space shift =
+  Array.init ((dim_y / space) - (shift * 1))
+    (fun _ -> Array.init ((dim_x / space) - (shift * 1))
+      (fun _ -> Float.pi *. (Random.float 1.)))
 
 let end_coord dist angle x y space =
   int_of_float (dist *. Float.cos(angle)) + (x * space),
-  int_of_float (dist *. Float.cos(angle)) + (y * space)
+  int_of_float (dist *. Float.sin(angle)) + (y * space)
 
 let draw_vecs_field t =
   let space = 30 in
-  let dist = 25. in
-  let shift = 5 in
+  let dist = 20. in
+  let shift = 1 in
   let dim_x, dim_y = Images.size (Rgba32 t) in
   let vecs = vector_field dim_x dim_y space shift in
   Array.iteri (fun y array_x -> Array.iteri (fun x e ->
     let x, y = x + shift, y + shift in
     let x_end, y_end = end_coord dist e x y space in
     bresenham t (x * space) (y * space) x_end y_end {color = {r = 0; g = 45; b = 200}; alpha = 255};
-    single_aliased_pixel t (x * space ) (y * space) {color = {r = 255; g = 0; b = 0}; alpha = 255}
   ) array_x) vecs; ()
 
 let () =
