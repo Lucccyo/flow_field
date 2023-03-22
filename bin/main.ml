@@ -13,10 +13,30 @@ let rand_lst size shift max =
   let open Random in
   List.init size (fun _ -> shift + int max)
 
+let angle_default () = Float.pi *. 0.25
+let angle_random  () = Float.pi *. (Random.float 1.)
+let angle_noise y y_max = ((float_of_int y /. float_of_int y_max)) *. Float.pi
+
+
+
+
 let vector_field dim_x dim_y space shift =
   Array.init ((dim_y / space) - (shift * 1))
-    (fun _ -> Array.init ((dim_x / space) - (shift * 1))
-      (fun _ -> Float.pi *. (Random.float 1.)))
+    (fun y -> Array.init ((dim_x / space) - (shift * 1))
+      (fun _ -> angle_noise y (dim_y / space) ))
+
+
+  (* for (column in num_columns) {
+    for (row in num_rows) {
+      (* Processing's noise() works best when the step between *)
+      (* points is approximately 0.005, so scale down to that *)
+      scaled_x = column * 0.005
+      scaled_y = row * 0.005
+      (* get our noise value, between 0.0 and 1.0 *)
+      noise_val = noise(scaled_x, scaled_y)
+      (* translate the noise value to an angle (betwen 0 and 2 * PI) *)
+      angle = map(noise_val, 0.0, 1.0, 0.0, PI * 2.0)
+      grid[column][row] = angle   } } *)
 
 let end_coord dist angle x y space =
   int_of_float (dist *. Float.cos(angle)) + (x * space),
