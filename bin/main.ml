@@ -15,14 +15,21 @@ let rand_lst size shift max =
 
 let grid t =
   let xmax, ymax = Images.size (Rgba32 t) in
-  let black : Color.rgba = {color = {r = 0; g = 0; b = 0}; alpha = 255} in
+  let black : Color.rgba = {color = {r = 0; g = 0; b = 0}; alpha = 50} in
+  let green : Color.rgba = {color = {r = 0; g = 255; b = 0}; alpha = 255} in
   let space = 40 in
   let g = Array.init (ymax/space) (fun y ->
     Array.init (xmax/space) (fun x -> 0 )) in
-  for y = 0 to Array.length g do
-    for x = 0 to Array.length g.(0) do
+  for y_grid = 0 to Array.length g do
+    for x_grid = 0 to Array.length g.(0) do
       try
-        single_aliased_pixel t (x * space) (y * space) black;
+        let x = x_grid * space in
+        let y = y_grid * space in
+        single_aliased_pixel t (x + 20) (y + 20) green;
+        bresenham t x y (x + 40) y black;
+        bresenham t x y x (y + 40) black;
+        (* bresenham t x y (x * space) (y * space) black; *)
+        (* center *)
       with Images.Out_of_image -> ()
     done
   done
