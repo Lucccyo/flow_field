@@ -13,23 +13,36 @@ let rand_lst size shift max =
   let open Random in
   List.init size (fun _ -> shift + int max)
 
+let angle_default () = Float.pi *. 0.25
+let angle_noise y y_max = ((float_of_int y /. float_of_int y_max)) *. Float.pi
+let angle_random () = Float.pi *. (Random.float 1.)
+
 let grid t =
   let xmax, ymax = Images.size (Rgba32 t) in
   let black : Color.rgba = {color = {r = 0; g = 0; b = 0}; alpha = 50} in
   let green : Color.rgba = {color = {r = 0; g = 255; b = 0}; alpha = 255} in
+  let red : Color.rgba = {color = {r = 255; g = 0; b = 0}; alpha = 255} in
   let space = 40 in
-  let g = Array.init (ymax/space) (fun y ->
-    Array.init (xmax/space) (fun x -> 0 )) in
-  for y_grid = 0 to Array.length g do
-    for x_grid = 0 to Array.length g.(0) do
+  let g = Array.init (ymax/space) (fun y -> Array.init (xmax/space) (fun x -> angle_noise y (ymax/space))) in
+  for y_grid = 0 to Array.length g - 1 do
+    for x_grid = 0 to Array.length g.(0) - 1 do
       try
         let x = x_grid * space in
         let y = y_grid * space in
-        single_aliased_pixel t (x + 20) (y + 20) green;
+        let x_center = (x + (space / 2)) in
+        let y_center = (y + (space / 2)) in
+        (* center *)
+        let angle = g.(y_grid).(x_grid) in
+        single_aliased_pixel t x_center y_center green;
+
+        let x_1, y_1 = (x_center + int_of_float(20. *. Float.cos(angle))), (y_center + int_of_float(20. *. Float.sin(angle))) in
+        bresenham t x_center y_center x_1 y_1 red;
+        let x_2, y_2 = (x_center + int_of_float(15. *. Float.cos(angle +. Float.pi))), (y_center + int_of_float(15. *. Float.sin(angle +. Float.pi))) in
+        bresenham t x_center y_center x_2 y_2 red;
+
+        (* grille *)
         bresenham t x y (x + 40) y black;
         bresenham t x y x (y + 40) black;
-        (* bresenham t x y (x * space) (y * space) black; *)
-        (* center *)
       with Images.Out_of_image -> ()
     done
   done
