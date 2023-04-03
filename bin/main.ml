@@ -23,7 +23,7 @@ let grid t =
   let black : Color.rgba = {color = {r = 0; g = 0; b = 0}; alpha = 255} in
   let green : Color.rgba = {color = {r = 0; g = 255; b = 0}; alpha = 255} in
   let red : Color.rgba = {color = {r = 255; g = 0; b = 0}; alpha = 255} in
-  let space = 30 in
+  let space = 24 in
   let g = Array.init (ymax/space) (fun y -> Array.init (xmax/space) (fun x -> angle_noise y (ymax/space))) in
   for y_grid = 0 to Array.length g - 1 do
     for x_grid = 0 to Array.length g.(0) - 1 do
@@ -38,13 +38,13 @@ let grid t =
 
         let l = float_of_int (space) /. 2.5 in
         let x_1, y_1 = (x_center + int_of_float(l *. Float.cos(angle))), (y_center + int_of_float(l *. Float.sin(angle))) in
-        bresenham t x_center y_center x_1 y_1 black;
+        bresenham t x_center y_center x_1 y_1 gray;
         let x_2, y_2 = (x_center + int_of_float(l *. Float.cos(angle +. Float.pi))), (y_center + int_of_float(l *. Float.sin(angle +. Float.pi))) in
-        bresenham t x_center y_center x_2 y_2 black;
+        bresenham t x_center y_center x_2 y_2 gray;
 
         (* grille *)
-        bresenham t x y (x + space) y gray;
-        bresenham t x y x (y + space) gray;
+        (* bresenham t x y (x + space) y gray;
+        bresenham t x y x (y + space) gray; *)
       with Images.Out_of_image -> ()
     done
   done; g
@@ -73,8 +73,10 @@ let draw_line t g =
   let start_x = 500 in
   let start_y = 300 in
   single_aliased_pixel t start_x start_y red;
-  iter t 50 start_x start_y g;
-  (* let pas = 50. in
+  try
+    iter t 50 start_x start_y g;
+  with Images.Out_of_image -> ();
+    (* let pas = 50. in
   let angle = get_angle start_x start_y g in
   let next_x = (start_x + int_of_float(pas *. Float.cos(angle))) in
   let next_y = (start_y + int_of_float(pas *. Float.sin(angle))) in
