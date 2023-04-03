@@ -35,14 +35,15 @@ let grid t =
         let angle = g.(y_grid).(x_grid) in
         single_aliased_pixel t x_center y_center green;
 
-        let x_1, y_1 = (x_center + int_of_float(20. *. Float.cos(angle))), (y_center + int_of_float(20. *. Float.sin(angle))) in
+        let l = float_of_int (space) /. 2.5 in
+        let x_1, y_1 = (x_center + int_of_float(l *. Float.cos(angle))), (y_center + int_of_float(l *. Float.sin(angle))) in
         bresenham t x_center y_center x_1 y_1 red;
-        let x_2, y_2 = (x_center + int_of_float(15. *. Float.cos(angle +. Float.pi))), (y_center + int_of_float(15. *. Float.sin(angle +. Float.pi))) in
+        let x_2, y_2 = (x_center + int_of_float(l *. Float.cos(angle +. Float.pi))), (y_center + int_of_float(l *. Float.sin(angle +. Float.pi))) in
         bresenham t x_center y_center x_2 y_2 red;
 
         (* grille *)
-        bresenham t x y (x + 40) y black;
-        bresenham t x y x (y + 40) black;
+        (* bresenham t x y (x + space) y black;
+        bresenham t x y x (y + space) black; *)
       with Images.Out_of_image -> ()
     done
   done
@@ -50,7 +51,7 @@ let grid t =
 
 let () =
   Random.self_init ();
-  let image_size = 1000 in
+  let image_size = 2000 in
   let rgba32 = Rgba32.create image_size image_size in
   try
     let white : Color.rgba = {color = {r = 255; g = 255; b = 255}; alpha = 255} in
