@@ -14,92 +14,41 @@ let rand_lst size shift max =
   List.init size (fun _ -> shift + int max)
 
 let angle_default () = Float.pi *. 0.25
-let angle_noise y y_max = ((float_of_int y /. float_of_int y_max)) *. Float.pi
-let angle_random () = Float.pi *. (Random.float 1.)
+let angle_noise y x = ((float_of_int y /. float_of_int x)) *. Float.pi
+let angle_random () = Random.self_init (); Float.pi *. (Random.float 1.)
 
-let grid t =
-  let xmax, ymax = Images.size (Rgba32 t) in
-  let gray : Color.rgba = {color = {r = 0; g = 0; b = 0}; alpha = 50} in
-  let black : Color.rgba = {color = {r = 0; g = 0; b = 0}; alpha = 255} in
-  let green : Color.rgba = {color = {r = 0; g = 255; b = 0}; alpha = 255} in
-  let red : Color.rgba = {color = {r = 255; g = 0; b = 0}; alpha = 255} in
-  let space = 24 in
-  let g = Array.init (ymax/space) (fun y -> Array.init (xmax/space) (fun x -> angle_noise y (ymax/space))) in
-  for y_grid = 0 to Array.length g - 1 do
-    for x_grid = 0 to Array.length g.(0) - 1 do
-      try
-        let x = x_grid * space in
-        let y = y_grid * space in
-        let x_center = (x + (space / 2)) in
-        let y_center = (y + (space / 2)) in
-        (* center *)
-        let angle = g.(y_grid).(x_grid) in
-        single_aliased_pixel t x_center y_center green;
+let calc_angle y ymax = ((float_of_int y /. float_of_int ymax)) *. Float.pi
 
-        let l = float_of_int (space) /. 2.5 in
-        let x_1, y_1 = (x_center + int_of_float(l *. Float.cos(angle))), (y_center + int_of_float(l *. Float.sin(angle))) in
-        bresenham t x_center y_center x_1 y_1 gray;
-        let x_2, y_2 = (x_center + int_of_float(l *. Float.cos(angle +. Float.pi))), (y_center + int_of_float(l *. Float.sin(angle +. Float.pi))) in
-        bresenham t x_center y_center x_2 y_2 gray;
-
-        (* grille *)
-        (* bresenham t x y (x + space) y gray;
-        bresenham t x y x (y + space) gray; *)
-      with Images.Out_of_image -> ()
-    done
-  done; g
-
-let get_angle x y grid =
-  let width  = Array.length grid.(0) in
-  let height = Array.length grid in
-  grid.(x/width).(y/height)
-
-
-let rec iter t n cur_x cur_y g =
+let rec iter t n cur_x cur_y =
   let red  : Color.rgba = {color = {r = 255; g = 0; b = 0}; alpha = 255} in
   let blue : Color.rgba = {color = {r = 0; g = 0; b = 255}; alpha = 255} in
+  let pas = 20. in
   if n = 0 then () else (
-    let pas = 40. in
-    let angle = get_angle cur_x cur_y g in
+    let angle = calc_angle cur_y 500 in
     let next_x = (cur_x + int_of_float(pas *. Float.cos(angle))) in
     let next_y = (cur_y + int_of_float(pas *. Float.sin(angle))) in
     bresenham t cur_x cur_y next_x next_y (if n mod 2 = 0 then blue else red);
-    iter t (n-1) next_x next_y g
+    iter t (n-1) next_x next_y
   )
 
-let draw_line t g =
+let draw_line t =
   let red : Color.rgba = {color = {r = 255; g = 0; b = 0}; alpha = 255} in
   let blue : Color.rgba = {color = {r = 0; g = 0; b = 255}; alpha = 255} in
   let start_x = 500 in
   let start_y = 300 in
   single_aliased_pixel t start_x start_y red;
   try
-    iter t 50 start_x start_y g;
-  with Images.Out_of_image -> ();
-    (* let pas = 50. in
-  let angle = get_angle start_x start_y g in
-  let next_x = (start_x + int_of_float(pas *. Float.cos(angle))) in
-  let next_y = (start_y + int_of_float(pas *. Float.sin(angle))) in
-  Format.printf "(%d; %d)\n" next_x next_y;
-  bresenham t start_x start_y next_x next_y red; *)
-  (* let ux, uy = *)
-  (* bresenham t 0 0 start_x start_y red; *)
-  ()
-
+    iter t 30 start_x start_y
+  with Images.Out_of_image -> ()
 
 let () =
   Random.self_init ();
-  let image_size = 2000 in
+  let image_size = 1000 in
   let rgba32 = Rgba32.create image_size image_size in
   try
     let white : Color.rgba = {color = {r = 255; g = 255; b = 255}; alpha = 255} in
     let red   : Color.rgba = {color = {r = 255; g = 0; b = 0}; alpha = 255} in
     hor_strip rgba32 0 image_size white;
-    let g = grid rgba32 in
-    draw_line rgba32 g;
-    (* let vecs = draw_vecs_field rgba32 in *)
-    (* curve rgba32 vecs red; *)
-    (* bresenham rgba32 0 0 30 0 red;
-    bresenham rgba32 0 0 0 30 red; *)
+    draw_line rgba32;
     build rgba32
   with Failure e -> Format.printf "ERROR: %s@." e
