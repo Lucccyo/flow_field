@@ -23,11 +23,17 @@ let rand_lst size shift max =
 
 (* let calc_angle x y xmax ymax = Float.pi *. (float_of_int y /. float_of_int ymax +. (float_of_int x +. float_of_int y) /. 36. +. ( 1. /. 2. ) *. (float_of_int x /. float_of_int xmax)) *)
 
-let map value cmin cmax nmin nmax = nmin +. ( nmax -. nmin ) *. (( value -. cmin ) /. ( cmax -. cmin ))
+(* let map value cmin cmax nmin nmax = nmin +. ( nmax -. nmin ) *. (( value -. cmin ) /. ( cmax -. cmin )) *)
+let map value min1 max1 min2 max2 = min2 +. ( max2 -. min2 ) *. (( value -. min1 ) /. ( max1 -. min1 ))
+
 let calc_angle x y xmax ymax =
-  let noise = Float.cos(float_of_int y /. float_of_int xmax) +. Float.pi /. 2.0 in
+  (* let noise = (float_of_int y /. float_of_int xmax) +. Float.pi /. 5. in *)
+  let noise = Float.atan2((float_of_int y) -. 1000.) (float_of_int x -. 1000.) +. (Float.pi /. 6.) in
   (* let noise = Float.pi *. (Random.float 100.) in *)
-  map noise 0.0 1.0 0.0 (Float.pi *. 4.0)
+  let angle = map noise (Float.pi *. -1.) (Float.pi) 0.0 (Float.pi *. 2.0) in
+  (* Format.printf "noise = %f\n" noise; *)
+  angle
+
 
 
 let rec iter t n cur_x cur_y color =
@@ -42,7 +48,7 @@ let rec iter t n cur_x cur_y color =
 
 let draw_line t start_x start_y size =
   Random.self_init ();
-  let red : Color.rgba = {color = {r = 255; g = ( Random.int 255 ) ; b = ( Random.int 255 )}; alpha = 255} in
+  let red : Color.rgba = {color = {r = ( Random.int 255 ); g = ( Random.int 255 ) ; b = 200}; alpha =  ( Random.int 255 )} in
   try
     iter t size start_x start_y red
   with Images.Out_of_image -> ()
@@ -55,8 +61,11 @@ let () =
     let black : Color.rgba = {color = {r = 0; g = 0; b = 0}; alpha = 255} in
     let red   : Color.rgba = {color = {r = 255; g = 0; b = 0}; alpha = 255} in
     hor_strip rgba32 0 image_size black;
-    for _ = 0 to 600 do
+    for _ = 0 to 100 do
       draw_line rgba32 ( Random.int 2000 ) ( Random.int 2000 ) ( 30 + (Random.int 500));
     done;
+    (* let a = 30. in
+    let angle = map a 0.0 50.0 0.0 (Float.pi *. 2.0) in *)
+    (* Format.printf "\nvalue = %f\n" angle; *)
     build rgba32
   with Failure e -> Format.printf "ERROR: %s@." e
