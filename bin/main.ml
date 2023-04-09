@@ -1,5 +1,9 @@
 open Data.Bezier
 
+type grid_node = {x : int; y : int; angle : float; len : int}
+
+let get_values t = t.x, t.y, t.angle, t.len
+
 let build t =
   let filename = "img.png" in
   try
@@ -40,15 +44,11 @@ let draw_line t start_x start_y size =
     iter t size start_x start_y red
   with Images.Out_of_image -> ()
 
-
-(* let make_grid  =
-  Array.init (dimx / size_square) (fun y -> Array.init (dimx / size_square) (fun x -> (x,y))) *)
-
 let print_value g =
   for y = 0 to Array.length g - 1 do
     for x = 0 to Array.length g.(0) - 1 do
-      let val1, val2, value = g.(y).(x) in
-      Format.printf "(%d;%d = %f)" val1 val2 value
+      let x, y, angle, len = get_values g.(y).(x) in
+      Format.printf "(%d;%d = %f, %d)" x y angle len
     done;
     Format.printf "\n"
   done
@@ -56,15 +56,16 @@ let print_value g =
 let grid dim size_square =
   Array.init ((dim / size_square) + 1)
     (fun y -> Array.init ((dim / size_square) + 1)
-    (fun x -> Random.self_init ();
-      (x * size_square, y * size_square, Float.pi *. (Random.float 1.))))
+    (fun x ->
+      {x = x * size_square; y =  y * size_square; angle = Float.pi *. (Random.float 1.); len = 1}))
 
 let catch x y grid size_square =
-  let nw1, nw2, vnw = grid.(y/size_square).(x/size_square) in
-  let ne1, ne2, vne = grid.(y/size_square).(x/size_square + 1) in
-  let sw1, sw2, vsw = grid.(y/size_square + 1).(x/size_square) in
-  let se1, se2, vse = grid.(y/size_square + 1).(x/size_square + 1) in
-  Format.printf "\nDans le carré:\tnw:(%d;%d = %f)\tne:(%d;%d = %f)\tsw:(%d;%d = %f)\tse:(%d;%d = %f)\n" nw1 nw2 vnw ne1 ne2 vne sw1 sw2 vsw se1 se2 vse;
+  let nw_x, nw_y, nw_angle, nw_len = get_values grid.(y/size_square).(x/size_square) in
+  let ne_x, ne_y, ne_angle, ne_len = get_values grid.(y/size_square).(x/size_square + 1) in
+  let sw_x, sw_y, sw_angle, sw_len = get_values grid.(y/size_square + 1).(x/size_square) in
+  let se_x, se_y, se_angle, se_len = get_values grid.(y/size_square + 1).(x/size_square + 1) in
+  Format.printf "\nDans le carré:\tnw:(%d;%d = %f, %d)\tne:(%d;%d = %f, %d)\tsw:(%d;%d = %f, %d)\tse:(%d;%d = %f, %d)\n"
+  nw_x nw_y nw_angle nw_len ne_x ne_y ne_angle ne_len sw_x sw_y sw_angle sw_len se_x se_y se_angle se_len;
   ()
 
 let () =
@@ -78,7 +79,7 @@ let () =
     let size_square = 250 in
     let grid = grid image_size size_square in
     print_value grid;
-    catch 0 0 grid size_square;
+    catch 1900 1900 grid size_square;
 
     build rgba32
   with Failure e -> Format.printf "ERROR: %s@." e
