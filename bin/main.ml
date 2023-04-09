@@ -13,17 +13,6 @@ let rand_lst size shift max =
   let open Random in
   List.init size (fun _ -> shift + int max)
 
-(* let angle_default () = Float.pi *. 0.25 *)
-(* let angle_noise y x = ((float_of_int y /. float_of_int x)) *. Float.pi *)
-(* let angle_random () = Random.self_init (); Float.pi *. (Random.float 1.) *)
-
-(* let calc_angle x y = (float_of_int x +. float_of_int y) *. Float.pi -. Float.pi /. 6. *)
-
-(* let calc_angle x y xmax ymax = Float.pi *. (float_of_int y /. float_of_int ymax /. (float_of_int x +. float_of_int y) /. 36.) *)
-
-(* let calc_angle x y xmax ymax = Float.pi *. (float_of_int y /. float_of_int ymax +. (float_of_int x +. float_of_int y) /. 36. +. ( 1. /. 2. ) *. (float_of_int x /. float_of_int xmax)) *)
-
-(* let map value cmin cmax nmin nmax = nmin +. ( nmax -. nmin ) *. (( value -. cmin ) /. ( cmax -. cmin )) *)
 let map value min1 max1 min2 max2 = min2 +. ( max2 -. min2 ) *. (( value -. min1 ) /. ( max1 -. min1 ))
 
 let calc_angle x y xmax ymax =
@@ -33,8 +22,6 @@ let calc_angle x y xmax ymax =
   let angle = map noise (Float.pi *. -1.) (Float.pi) 0.0 (Float.pi *. 2.0) in
   (* Format.printf "noise = %f\n" noise; *)
   angle
-
-
 
 let rec iter t n cur_x cur_y color =
   let pas = 20. in
@@ -53,6 +40,33 @@ let draw_line t start_x start_y size =
     iter t size start_x start_y red
   with Images.Out_of_image -> ()
 
+
+(* let make_grid  =
+  Array.init (dimx / size_square) (fun y -> Array.init (dimx / size_square) (fun x -> (x,y))) *)
+
+let print_value g =
+  for y = 0 to Array.length g - 1 do
+    for x = 0 to Array.length g.(0) - 1 do
+      let val1, val2, value = g.(y).(x) in
+      Format.printf "(%d;%d = %f)" val1 val2 value
+    done;
+    Format.printf "\n"
+  done
+
+let grid dim size_square =
+  Array.init ((dim / size_square) + 1)
+    (fun y -> Array.init ((dim / size_square) + 1)
+    (fun x -> Random.self_init ();
+      (x * size_square, y * size_square, Float.pi *. (Random.float 1.))))
+
+let catch x y grid size_square =
+  let nw1, nw2, vnw = grid.(y/size_square).(x/size_square) in
+  let ne1, ne2, vne = grid.(y/size_square).(x/size_square + 1) in
+  let sw1, sw2, vsw = grid.(y/size_square + 1).(x/size_square) in
+  let se1, se2, vse = grid.(y/size_square + 1).(x/size_square + 1) in
+  Format.printf "\nDans le carré:\tnw:(%d;%d = %f)\tne:(%d;%d = %f)\tsw:(%d;%d = %f)\tse:(%d;%d = %f)\n" nw1 nw2 vnw ne1 ne2 vne sw1 sw2 vsw se1 se2 vse;
+  ()
+
 let () =
   Random.self_init ();
   let image_size = 2000 in
@@ -60,12 +74,11 @@ let () =
   try
     let black : Color.rgba = {color = {r = 0; g = 0; b = 0}; alpha = 255} in
     let red   : Color.rgba = {color = {r = 255; g = 0; b = 0}; alpha = 255} in
-    hor_strip rgba32 0 image_size black;
-    for _ = 0 to 100 do
-      draw_line rgba32 ( Random.int 2000 ) ( Random.int 2000 ) ( 30 + (Random.int 500));
-    done;
-    (* let a = 30. in
-    let angle = map a 0.0 50.0 0.0 (Float.pi *. 2.0) in *)
-    (* Format.printf "\nvalue = %f\n" angle; *)
+
+    let size_square = 250 in
+    let grid = grid image_size size_square in
+    print_value grid;
+    catch 0 0 grid size_square;
+
     build rgba32
   with Failure e -> Format.printf "ERROR: %s@." e
