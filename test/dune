@@ -1,0 +1,6 @@
+(test
+ (name test)
+ (libraries data))
+(env
+  (dev
+    (flags (:standard -w -33))))
