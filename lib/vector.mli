@@ -11,7 +11,9 @@ val vector_from_angle_len: coordinate -> float -> float -> vector
 
 val vector_from_coordinates: coordinate -> coordinate -> vector
 
-val (=): vector -> vector -> bool
+val equal: vector -> vector -> bool
+
+val nul: unit -> vector
 
 (* val (+): vector -> vector -> vector *)
 

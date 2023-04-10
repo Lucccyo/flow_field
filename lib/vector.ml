@@ -22,16 +22,10 @@ let vector_from_coordinates start_point end_point =
     coordinate = { x = end_point.x - start_point.x; y = end_point.y - start_point.y };
   }
 
-
 let equal v1 v2 = v1.direction = v2.direction && v1.norm = v2.norm
 
-let (=) = equal
+(* let (=) = equal *)
+
+let nul () = { direction = 0.; norm = 0.; coordinate = { x = 0; y = 0 }; }
 
 let dot_product v1 v2 = f ((v1.coordinate.x * v2.coordinate.x) + (v1.coordinate.y * v2.coordinate.y))
-
-(* let dot_product v1 v2 = *)
-  (* let norm2_v1 = Float.pow v1.norm 2. in
-  let norm2_v2 = Float.pow v2.norm 2. in
-  let v3 = v1 + v2 in
-  let norm2_v3 = Float.pow v3.norm 2. in
-  1. /. 2. *. (norm2_v3 -. norm2_v1 -. norm2_v2) *)
