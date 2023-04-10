@@ -13,7 +13,7 @@ val vector_from_coordinates: coordinate -> coordinate -> vector
 
 val (=): vector -> vector -> bool
 
-val (+): vector -> vector -> vector
+(* val (+): vector -> vector -> vector *)
 
-(* val dot_product: vector -> vector -> float *)
+val dot_product: vector -> vector -> float
 (* al-Kashi's theorem *)

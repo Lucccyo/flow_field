@@ -27,11 +27,7 @@ let equal v1 v2 = v1.direction = v2.direction && v1.norm = v2.norm
 
 let (=) = equal
 
-let sum v1 v2 = vector_from_coordinates v1.coordinate v2.coordinate
-
-let (+) = sum
-
-(* let dot_product v1 v2 = *)
+let dot_product v1 v2 = f ((v1.coordinate.x * v2.coordinate.x) + (v1.coordinate.y * v2.coordinate.y))
 
 (* let dot_product v1 v2 = *)
   (* let norm2_v1 = Float.pow v1.norm 2. in
