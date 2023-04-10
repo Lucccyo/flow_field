@@ -16,5 +16,3 @@ let () =
 
   Format.printf "produit scalaire = %f\n\n\n" (dot_product vec vec2);
   ()
-
-
