@@ -8,6 +8,11 @@ type node = {
   distance_vector: vector;
 }
 
+let pp_node node =
+  Format.printf "{x = %d\ny = %d\ngradiant_vector = {dir = %f ; norm = %f ; c = (%d;%d)}\ndistance_vector = {dir = %f ; norm = %f ; c = (%d;%d)}}\n"
+    node.x node.y node.gradiant_vector.dir node.gradiant_vector.norm node.gradiant_vector.c.x node.gradiant_vector.c.y
+      node.distance_vector.dir node.distance_vector.norm node.distance_vector.c.x node.distance_vector.c.y
+
 let build t =
   let filename = "img.png" in
   try
@@ -47,22 +52,23 @@ let draw_line t start_x start_y size =
     iter t size start_x start_y red
   with Images.Out_of_image -> ()
 
-(* let print_value g =
+let print_grid g =
   for y = 0 to Array.length g - 1 do
     for x = 0 to Array.length g.(0) - 1 do
-      let x, y, angle, len = get_values g.(y).(x) in
-      Format.printf "(%d;%d = %f, %d)" x y angle len
+      pp_node g.(x).(y)
     done;
     Format.printf "\n"
-  done *)
+  done
 
-let grid dim size_square =
-  Array.init ((dim / size_square) + 1)
-    (fun y -> Array.init ((dim / size_square) + 1)
-    (fun x ->
-      {x = x * size_square; y = y * size_square; gradiant_vector =
-       vector_from_angle_len {x; y;} (Float.pi *. (Random.float 1.)) 1.;
-       distance_vector = nul (); } ))
+let grid dim_image size_square =
+  Array.init ((dim_image / size_square) + 1)
+    (fun y_grid -> Array.init ((dim_image / size_square) + 1)
+    (fun x_grid ->
+      let x = x_grid * size_square in
+      let y = y_grid * size_square in
+      { x = x; y = x;
+        gradiant_vector = vector_from_angle_len {x; y;} (Float.pi *. (Random.float 1.)) 1.;
+        distance_vector = null_vector (); } ))
 
 (* let catch x y grid size_square =
   let nw_x, nw_y, nw_angle, nw_len = get_values grid.(y/size_square).(x/size_square) in
@@ -71,7 +77,7 @@ let grid dim size_square =
   let se_x, se_y, se_angle, se_len = get_values grid.(y/size_square + 1).(x/size_square + 1) in
   Format.printf "\nDans le carré:\tnw:(%d;%d = %f, %d)\tne:(%d;%d = %f, %d)\tsw:(%d;%d = %f, %d)\tse:(%d;%d = %f, %d)\n"
   nw_x nw_y nw_angle nw_len ne_x ne_y ne_angle ne_len sw_x sw_y sw_angle sw_len se_x se_y se_angle se_len;
-  () *)
+  (* () *) *)
 
 let () =
   Random.self_init ();
@@ -81,6 +87,8 @@ let () =
     let black : Color.rgba = {color = {r = 0; g = 0; b = 0}; alpha = 255} in
     let red   : Color.rgba = {color = {r = 255; g = 0; b = 0}; alpha = 255} in
     hor_strip rgba32 0 image_size black;
+    let g = grid image_size 250 in
+    print_grid g;
     (* for _ = 0 to 600 do
       draw_line rgba32 ( Random.int 2000 ) ( Random.int 2000 ) ( 10 + (Random.int 100));
     done; *)

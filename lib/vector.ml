@@ -1,8 +1,8 @@
 type coordinate = { x: int; y: int }
 
 type vector = {
-  dir  : float;
-  norm : float;
+  dir : float;
+  norm: float;
   c: coordinate
 }
 
@@ -10,7 +10,7 @@ let (fli) = float_of_int
 
 let (ifl) = int_of_float
 
-let null_vector () = { dir = 0.; norm = 0.; c = { x = 0; y = 0 } }
+let null_vector () = { dir = 0.0; norm = 0.0; c = { x = 0; y = 0 } }
 
 let vector_from_angle_len start_point angle length =
   { dir  = angle;
