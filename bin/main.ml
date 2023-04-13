@@ -22,6 +22,18 @@ let build t =
       Png.save store [Images.Save_Quality 1] (Rgba32 t)
   with Failure m -> Format.printf "Error %s@." m
 
+let catch x y grid size_square =
+  let nw_node = grid.(y/size_square).(x/size_square) in
+  let ne_node = grid.(y/size_square).(x/size_square + 1) in
+  let sw_node = grid.(y/size_square + 1).(x/size_square) in
+  let se_node = grid.(y/size_square + 1).(x/size_square + 1) in
+  Format.printf "Dans le carré : ";
+  pp_node nw_node;
+  pp_node ne_node;
+  pp_node sw_node;
+  pp_node se_node;
+  ()
+
 let rand_lst size shift max =
   let open Random in
   List.init size (fun _ -> shift + int max)
@@ -66,18 +78,10 @@ let grid dim_image size_square =
     (fun x_grid ->
       let x = x_grid * size_square in
       let y = y_grid * size_square in
-      { x = x; y = x;
+      { x; y;
         gradiant_vector = vector_from_angle_len {x; y;} (Float.pi *. (Random.float 1.)) 1.;
         distance_vector = null_vector (); } ))
 
-(* let catch x y grid size_square =
-  let nw_x, nw_y, nw_angle, nw_len = get_values grid.(y/size_square).(x/size_square) in
-  let ne_x, ne_y, ne_angle, ne_len = get_values grid.(y/size_square).(x/size_square + 1) in
-  let sw_x, sw_y, sw_angle, sw_len = get_values grid.(y/size_square + 1).(x/size_square) in
-  let se_x, se_y, se_angle, se_len = get_values grid.(y/size_square + 1).(x/size_square + 1) in
-  Format.printf "\nDans le carré:\tnw:(%d;%d = %f, %d)\tne:(%d;%d = %f, %d)\tsw:(%d;%d = %f, %d)\tse:(%d;%d = %f, %d)\n"
-  nw_x nw_y nw_angle nw_len ne_x ne_y ne_angle ne_len sw_x sw_y sw_angle sw_len se_x se_y se_angle se_len;
-  (* () *) *)
 
 let () =
   Random.self_init ();
@@ -87,8 +91,9 @@ let () =
     let black : Color.rgba = {color = {r = 0; g = 0; b = 0}; alpha = 255} in
     let red   : Color.rgba = {color = {r = 255; g = 0; b = 0}; alpha = 255} in
     hor_strip rgba32 0 image_size black;
-    let g = grid image_size 250 in
-    print_grid g;
+    let size_square = 250 in
+    let g = grid image_size size_square in
+    catch 0 0 g size_square;
     (* for _ = 0 to 600 do
       draw_line rgba32 ( Random.int 2000 ) ( Random.int 2000 ) ( 10 + (Random.int 100));
     done; *)
