@@ -27,12 +27,7 @@ let catch x y grid size_square =
   let ne_node = grid.(y/size_square).(x/size_square + 1) in
   let sw_node = grid.(y/size_square + 1).(x/size_square) in
   let se_node = grid.(y/size_square + 1).(x/size_square + 1) in
-  Format.printf "Dans le carré : ";
-  pp_node nw_node;
-  pp_node ne_node;
-  pp_node sw_node;
-  pp_node se_node;
-  ()
+  nw_node, ne_node, sw_node, se_node
 
 let rand_lst size shift max =
   let open Random in
@@ -40,28 +35,34 @@ let rand_lst size shift max =
 
 let map value min1 max1 min2 max2 = min2 +. ( max2 -. min2 ) *. (( value -. min1 ) /. ( max1 -. min1 ))
 
-let calc_angle x y xmax ymax =
-  (* let noise = (float_of_int y /. float_of_int xmax) +. Float.pi /. 5. in *)
-  let noise = Float.atan2((float_of_int y) -. 1000.) (float_of_int x -. 1000.) +. (Float.pi /. 6.) in
-  (* let noise = Float.pi *. (Random.float 100.) in *)
-  let angle = map noise (Float.pi *. -1.) (Float.pi) 0.0 (Float.pi *. 2.0) in
-  (* Format.printf "noise = %f\n" noise; *)
-  angle
+let calc_angle x y g size_square =
+  let nw, ne, sw, se = catch x y g size_square in
+  let nw_dist = vector_from_coordinates {x = nw.x; y = nw.y} {x; y} in
+  let nw_prod = dot_product nw.gradiant_vector nw_dist in
+  let ne_dist = vector_from_coordinates {x = ne.x; y = ne.y} {x; y} in
+  let ne_prod = dot_product ne.gradiant_vector ne_dist in
+  let sw_dist = vector_from_coordinates {x = sw.x; y = sw.y} {x; y} in
+  let sw_prod = dot_product sw.gradiant_vector sw_dist in
+  let se_dist = vector_from_coordinates {x = se.x; y = se.y} {x; y} in
+  let se_prod = dot_product se.gradiant_vector se_dist in
+  0.2
 
-let rec iter t n cur_x cur_y color =
+
+
+let rec iter t n cur_x cur_y color g size_square =
   let pas = 20. in
   if n = 0 then () else (
-    let angle = calc_angle cur_x cur_y 2000 2000 in
+    let angle = calc_angle cur_x cur_y g size_square in
     let next_x = (cur_x + int_of_float(pas *. Float.cos(angle))) in
     let next_y = (cur_y + int_of_float(pas *. Float.sin(angle))) in
     bresenham t cur_x cur_y next_x next_y color;
-    iter t (n-1) next_x next_y color )
+    iter t (n-1) next_x next_y color g size_square)
 
-let draw_line t start_x start_y size =
+let draw_line t start_x start_y size g size_square =
   Random.self_init ();
   let red : Color.rgba = {color = {r = ( Random.int 255 ); g = ( Random.int 255 ) ; b = 200}; alpha =  ( Random.int 255 )} in
   try
-    iter t size start_x start_y red
+    iter t size start_x start_y red g size_square
   with Images.Out_of_image -> ()
 
 let print_grid g =
@@ -93,9 +94,9 @@ let () =
     hor_strip rgba32 0 image_size black;
     let size_square = 250 in
     let g = grid image_size size_square in
-    catch 0 0 g size_square;
-    (* for _ = 0 to 600 do
-      draw_line rgba32 ( Random.int 2000 ) ( Random.int 2000 ) ( 10 + (Random.int 100));
-    done; *)
+    (* catch 1999 1999 g size_square; *)
+    for _ = 0 to 100 do
+      draw_line rgba32 ( Random.int 2000 ) ( Random.int 2000 ) ( 10 + (Random.int 100)) g size_square;
+    done;
     build rgba32
   with Failure e -> Format.printf "ERROR: %s@." e
