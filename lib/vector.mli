@@ -1,17 +1,13 @@
-type coordinate = { x: int; y: int }
+type vector = { dx: float; dy: float }
 
-type vector = {
-  dir  : float;
-  norm : float;
-  c: coordinate
-}
+val null_vector: vector
 
-val null_vector: unit -> vector
+val vector_from_angle_len: float -> float -> vector
 
-val vector_from_angle_len: coordinate -> float -> float -> vector
-
-val vector_from_coordinates: coordinate -> coordinate -> vector
+val vector_from_coordinates: vector -> vector -> vector
 
 val equal: vector -> vector -> bool
 
 val dot_product: vector -> vector -> float
+
+val pp_vector: Format.formatter -> vector -> unit
