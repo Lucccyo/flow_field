@@ -10,7 +10,7 @@ let build t =
       Png.save store [Images.Save_Quality 1] (Rgba32 t)
   with Failure m -> Format.printf "Error %s@." m
 
-let ii2v idx idy = { dx = float_of_int idx ; dy = float_of_int idy }
+(* let ii2v idx idy = { dx = float_of_int idx ; dy = float_of_int idy } *)
 
 let dot_product v1 v2 ss =
   (* if (v1.dx *. v1.dx +. v1.dy *. v1.dy > ss *. ss) then Format.printf "! %f@." (v1.dx *. v1.dx +. v1.dy *. v1.dy); *)
@@ -21,17 +21,17 @@ let dot_product v1 v2 ss =
   p
 
 let dot_products x y grid size_square =
-  let i = y / size_square in
-  let j = x / size_square in
-  let dx = x mod size_square in
-  let dy = y mod size_square in
   let ss = float_of_int size_square in
-  dot_product grid.(i).(j) (ii2v dx dy) ss,
-  dot_product grid.(i).(j + 1) (ii2v (dx - size_square) dy) ss,
-  dot_product grid.(i + 1).(j + 1) (ii2v (dx - size_square) (dy - size_square)) ss,
-  dot_product grid.(i + 1).(j) (ii2v dx (dy - size_square)) ss,
-  float_of_int dx /. ss,
-  float_of_int dy /. ss
+  let i = Float.to_int (y /. ss) in
+  let j = Float.to_int (x /. ss) in
+  let dx = x -. float_of_int (j * size_square) in
+  let dy = y -. float_of_int (i * size_square) in
+  dot_product grid.(i).(j) {dx; dy} ss,
+  dot_product grid.(i).(j + 1) {dx = dx -. ss; dy} ss,
+  dot_product grid.(i + 1).(j + 1) {dx = dx -. ss; dy = dy -. ss} ss,
+  dot_product grid.(i + 1).(j) {dx; dy = dy -. ss} ss,
+  dx /. ss,
+  dy /. ss
 
 (*
 let rand_lst size shift max =
@@ -47,33 +47,34 @@ let dot_p node x y =
   dot_product node.gradiant_vector node_distance
 *)
 
-let calc_angle x y grid size_square =
-  let psw, pse, pne, pnw, _, _ = dot_products x y grid size_square in
+let vmin = ref 0.
+let vmax = ref 0.
+
+let calc_angle_orig x y grid size_square =
+  let psw, pse, pne, pnw, xf, yf = dot_products x y grid size_square in
   let fade t = 6.*.(t**5.) -. 15.*.(t**4.) +. 10.*.(t**3.) in
   let lerp t v1 v2 = v1 +. t *. (v2 -. v1) in
-  let u = fade (float_of_int x) in
-  let v = fade (float_of_int y) in
-  lerp u (lerp v psw pnw) (lerp v pse pne)
+  let u = fade xf in
+  let v = fade yf in
+  let r = lerp u (lerp v psw pnw) (lerp v pse pne) in
+  (* if r < !vmin then (vmin := r; Format.printf "%f %f@." !vmin !vmax); *)
+  (* if r > !vmax then (vmax := r; Format.printf "%f %f@." !vmin !vmax); *)
+  3. *. Float.pi *. r
 
-(* let vmin = ref 0. *)
-(* let vmax = ref 0. *)
-
-let calc_angle x y grid size_square =
+let calc_angle_wiki x y grid size_square =
   let psw, pse, pne, pnw, sx, sy = dot_products x y grid size_square in
   let ipl a0 a1 w = (a1 -. a0) *. ((w *. (w *. 6.0 -. 15.0) +. 10.0) *. w *. w *. w) +. a0 in
   let ix0 = ipl psw pse sx in
   let ix1 = ipl pnw pne sx in
-  let v = 3. *. (ipl ix0 ix1 sy) in
-  (* if v < !vmin then (vmin := v; Format.printf "%f@." v); *)
-  (* if v > !vmax then (vmax := v; Format.printf "%f@." v); *)
-  (*if (v < -1. || v > 1.) then*)
-  (* Format.printf "%f@." v; *)
-  Float.pi *. v
+  let r = ipl ix0 ix1 sy in
+  (* if r < !vmin then (vmin := r; Format.printf "%f %f@." !vmin !vmax); *)
+  (* if r > !vmax then (vmax := r; Format.printf "%f %f@." !vmin !vmax); *)
+  3. *. Float.pi *. r
 
 let rec iter t n cur_x cur_y color grid size_square =
   let pas = 3. in
   if n = 0 then () else (
-    let angle = calc_angle cur_x cur_y grid size_square in
+    let angle = calc_angle_orig (float_of_int cur_x) (float_of_int cur_y) grid size_square in
 (*Format.printf "%f@." angle;*)
     let next_x = cur_x + int_of_float(pas *. Float.cos(angle)) in
     let next_y = cur_y + int_of_float(pas *. Float.sin(angle)) in
@@ -111,7 +112,7 @@ let () =
     let black : Color.rgba = {color = {r = 0; g = 0; b = 0}; alpha = 255} in
     let red   : Color.rgba = {color = {r = 255; g = 0; b = 0}; alpha = 255} in
     hor_strip rgba32 0 image_size black;
-    let size_square = 125 in
+    let size_square = 50 in
     let g = grid image_size size_square in
     (* catch 1999 1999 g size_square; *)
     (* Format.printf "\n>> %f\n" (calc_angle 33 33 g 250); *)
@@ -120,11 +121,42 @@ let () =
       draw_line rgba32 (Random.int 2000) (Random.int 2000) (10 + Random.int 300) g size_square;
     done;
     *)
+
+    let h_of_angle h ceil =
+      let max = 2. *. Float.pi in
+      let min = -. max in
+      let h = (h -. min) *. ceil /. (max -. min) in
+      let h = if h < 0. then 0. else
+        (* h in *)
+        if h > ceil then ceil else h in
+      int_of_float h (*mod int_of_float ceil*)
+    in
+
     for x = 0 to 1999 do for y = 0 to 1999 do
-      let h = calc_angle x y g size_square in
-      let h = (h +. 2. *. Float.pi) *. 360. /. (2. *. Float.pi) in
-      let h = (int_of_float h) mod 360 in
-      if h < 0 then (Format.printf "%d@." h);
+      (* if x mod size_square = 0 || y mod size_square = 0 then *)
+      let s = ref 0. in
+      let fx = float_of_int x and fy = float_of_int y in
+      let rec fbm n l h =
+        if n = 0 then h else
+        let a = Float.ldexp 1. (1 - n) in
+        let h = h +. a *. calc_angle_wiki (fx /. l) (fy /. l) g size_square in
+        fbm (n - 1) (l *. 2.) h
+      in
+      let h = fbm 5 1. 0. in
+(*
+      if h < !vmin then (vmin := h; Format.printf "%f %f@." !vmin !vmax);
+      if h > !vmax then (vmax := h; Format.printf "%f %f@." !vmin !vmax);
+*)
+      (*
+      let h = h_of_angle h 255. in
+      let c = {Color.color = {r = 0; g = h; b = 0}; alpha = 255} in
+      *)
+      let h = h_of_angle h 255. in
+      let c = if h < 128 then
+        {Color.color = {r = 0; g = 0; b = 30 + h * 4 / 3}; alpha = 255} else
+        {Color.color = {r = 0; g = h; b = 0}; alpha = 255} in
+      (*
+      let h = h_of_angle h 360. in
       let t = (h mod 60) * 255 / 60 in
       let q = 255 - t in
       let c = match h / 60 with
@@ -136,7 +168,8 @@ let () =
       | 5 -> {Color.color = {r = 255; g = 0; b = q}; alpha = 255}
       | _ -> {Color.color = {r = 0;   g = 0; b = 0}; alpha = 255}
       in
-      Rgba32.set rgba32 x y c;
+      *)
+      Rgba32.set rgba32 x y c
     done done;
     build rgba32
   with Failure e -> Format.printf "ERROR: %s@." e
